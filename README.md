@@ -1,98 +1,165 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# cosmetics-shop-api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Next.js로 구현했던 화장품 쇼핑몰 백엔드를 NestJS로 재구현한 프로젝트입니다.
+동일한 API 스펙을 유지하면서 프레임워크만 교체하여 두 방식의 차이를 학습했습니다.
+참고 : cosmetics-shop(next.js) [https://github.com/hyokyong/cosmetics-shop](https://github.com/hyokyong/cosmetics-shop 'cosmetics-shop')
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 기술 스택
 
-## Description
+- **프레임워크**: NestJS
+- **언어**: TypeScript
+- **DB**: PostgreSQL (Neon)
+- **ORM**: Prisma 7
+- **인증**: JWT (accessToken 1시간, refreshToken 7일), bcrypt
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 프로젝트 구조
 
-## Project setup
-
-```bash
-$ npm install
+```
+src/
+  auth/
+    dto/auth.dto.ts          # 요청 타입 정의
+    auth.controller.ts       # 라우팅
+    auth.service.ts          # 비즈니스 로직
+    auth.module.ts           # 모듈 등록
+  products/
+    dto/product.dto.ts
+    products.controller.ts
+    products.service.ts
+    products.module.ts
+  orders/
+    dto/order.dto.ts
+    orders.controller.ts
+    orders.service.ts
+    orders.module.ts
+  shipping-addresses/
+    shipping-addresses.controller.ts
+    shipping-addresses.service.ts
+    shipping-addresses.module.ts
+  reviews/
+    reviews.controller.ts
+    reviews.service.ts
+    reviews.module.ts
+  admin/
+    admin.controller.ts
+    admin.service.ts
+    admin.module.ts
+  prisma/
+    prisma.service.ts        # Prisma 클라이언트 싱글톤
+    prisma.module.ts         # 글로벌 모듈
+  app.module.ts              # 루트 모듈
+  main.ts                    # 서버 진입점 (port 4000)
+prisma/
+  schema.prisma              # DB 스키마
 ```
 
-## Compile and run the project
+## API 목록
+
+**인증**
+
+| 메서드 | 경로                           | 인증 | 설명             |
+| ------ | ------------------------------ | ---- | ---------------- |
+| `POST` | `/api/auth/signup`             |      | 회원가입         |
+| `POST` | `/api/auth/login`              |      | 로그인           |
+| `GET`  | `/api/auth/check-email?email=` |      | 이메일 중복 확인 |
+| `POST` | `/api/auth/refresh`            |      | 액세스 토큰 갱신 |
+
+**상품**
+
+| 메서드   | 경로                   | 인증  | 설명                                        |
+| -------- | ---------------------- | ----- | ------------------------------------------- |
+| `GET`    | `/api/products`        |       | 상품 목록 (page, size, category, brandName) |
+| `GET`    | `/api/products/brands` |       | 브랜드 목록                                 |
+| `GET`    | `/api/products/:id`    |       | 상품 상세                                   |
+| `POST`   | `/api/products`        | ADMIN | 상품 등록                                   |
+| `PUT`    | `/api/products/:id`    | ADMIN | 상품 수정                                   |
+| `DELETE` | `/api/products/:id`    | ADMIN | 상품 삭제 (소프트)                          |
+
+**주문**
+
+| 메서드   | 경로              | 인증 | 설명         |
+| -------- | ----------------- | ---- | ------------ |
+| `POST`   | `/api/orders`     | USER | 주문 생성    |
+| `GET`    | `/api/orders`     | USER | 내 주문 목록 |
+| `GET`    | `/api/orders/:id` | USER | 주문 상세    |
+| `DELETE` | `/api/orders/:id` | USER | 주문 취소    |
+
+**배송지**
+
+| 메서드   | 경로                          | 인증 | 설명        |
+| -------- | ----------------------------- | ---- | ----------- |
+| `GET`    | `/api/shipping-addresses`     | USER | 배송지 목록 |
+| `POST`   | `/api/shipping-addresses`     | USER | 배송지 등록 |
+| `DELETE` | `/api/shipping-addresses/:id` | USER | 배송지 삭제 |
+
+**리뷰**
+
+| 메서드 | 경로                      | 인증 | 설명             |
+| ------ | ------------------------- | ---- | ---------------- |
+| `GET`  | `/api/reviews?productId=` |      | 상품별 리뷰 목록 |
+| `POST` | `/api/reviews`            | USER | 리뷰 작성        |
+
+**관리자 · 파트너**
+
+| 메서드  | 경로                             | 인증  | 설명               |
+| ------- | -------------------------------- | ----- | ------------------ |
+| `GET`   | `/api/admin/partners`            | ADMIN | 파트너 목록        |
+| `POST`  | `/api/admin/partners`            | ADMIN | 파트너 등록        |
+| `PATCH` | `/api/admin/partners/:id/active` | ADMIN | 파트너 활성/비활성 |
+
+## 로컬 실행
 
 ```bash
-# development
-$ npm run start
+# 패키지 설치
+npm install
 
-# watch mode
-$ npm run start:dev
+# 환경변수 설정 (.env)
+DATABASE_URL="Neon Connection String"
+JWT_SECRET="시크릿 키"
+JWT_REFRESH_SECRET="리프레시 시크릿 키"
 
-# production mode
-$ npm run start:prod
+# DB 테이블 생성
+npx prisma db push
+
+# 개발 서버 실행 (port 4000)
+npm run start:dev
 ```
 
-## Run tests
+## 학습 내용
 
-```bash
-# unit tests
-$ npm run test
+### NestJS 구조
 
-# e2e tests
-$ npm run test:e2e
+Spring을 사용해본 경험이 있어 구조가 익숙했다. NestJS는 `Controller`, `Service`, `Module` 세 가지로 역할이 나뉜다.
 
-# test coverage
-$ npm run test:cov
+| 역할       | 파일                 | 설명                                |
+| ---------- | -------------------- | ----------------------------------- |
+| Controller | `auth.controller.ts` | 요청 받고 응답 반환 (라우팅만 담당) |
+| Service    | `auth.service.ts`    | 실제 비즈니스 로직 처리             |
+| Module     | `auth.module.ts`     | Controller, Service 등록 및 조립    |
+
+요청 흐름은 아래와 같다.
+
+```
+요청 → Controller (라우팅) → Service (로직) → Prisma (DB) → 응답
 ```
 
-## Deployment
+### Prisma
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+SQL을 직접 작성하지 않고 TypeScript 코드로 DB를 다루는 ORM이다. Java의 JPA와 동일한 역할을 한다.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+`prisma/schema.prisma`에 테이블 구조를 정의하면 Prisma가 자동으로 메서드를 생성해준다.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```ts
+// 조회
+await prisma.user.findUnique({ where: { email } });
+
+// 생성
+await prisma.user.create({ data: { email, password, name } });
+
+// 수정
+await prisma.user.update({ where: { id }, data: { name } });
+
+// 삭제
+await prisma.user.delete({ where: { id } });
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+TypeScript 타입이 자동으로 지원되어 자동완성과 타입 에러 감지가 가능하다.
