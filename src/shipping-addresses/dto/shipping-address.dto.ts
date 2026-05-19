@@ -1,6 +1,6 @@
 export class CreateShippingAddressDto {
-  address!: string
-  detailAddress?: string
-  zipCode!: string
-  isDefault?: boolean
+  address!: string;
+  detailAddress?: string;
+  zipCode!: string;
+  isDefault?: boolean;
 }
